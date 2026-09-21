@@ -9,6 +9,7 @@ const uint8_t MQ5_PIN = A4;
 const uint8_t MQ135_PIN = A3;
 const float ADC_REFERENCE_VOLTAGE = 5.0f;
 const float ADC_MAX_VALUE = 1023.0f;
+const uint8_t NUM_SAMPLES = 20; // Number of consecutive samples to average
 
 GxEPD2_BW<GxEPD2_154_D67, 8> display(
   GxEPD2_154_D67(/*CS=*/ 10, /*DC=*/ 9, /*RST=*/ 8, /*BUSY=*/ 7));
@@ -19,6 +20,10 @@ static float hidden1[28];
 static float hidden2[14];
 static float output[TINYML_FRUIT_OUTPUTS];
 static int8_t lastFreshness = -1;
+
+// Forward declarations
+void drawFreshApple();
+void drawRottenApple();
 
 float adcToVoltage(float adcValue) {
   return adcValue * ADC_REFERENCE_VOLTAGE / ADC_MAX_VALUE;
@@ -91,14 +96,30 @@ void setup() {
 }
 
 void loop() {
-  float mq3 = analogRead(MQ3_PIN);
-  float mq5 = analogRead(MQ5_PIN);
-  float mq135 = analogRead(MQ135_PIN);
+  float sum_mq3 = 0.0f;
+  float sum_mq5 = 0.0f;
+  float sum_mq135 = 0.0f;
 
-  buildFeatures(mq3, mq5, mq135);
+  // Collect NUM_SAMPLES consecutive measurements
+  for (uint8_t i = 0; i < NUM_SAMPLES; ++i) {
+    sum_mq3 += analogRead(MQ3_PIN);
+    sum_mq5 += analogRead(MQ5_PIN);
+    sum_mq135 += analogRead(MQ135_PIN);
+    delay(50); // Short delay between individual sample readings
+  }
+
+  // Calculate averages
+  float avg_mq3 = sum_mq3 / NUM_SAMPLES;
+  float avg_mq5 = sum_mq5 / NUM_SAMPLES;
+  float avg_mq135 = sum_mq135 / NUM_SAMPLES;
+
+  // Run feature extraction and inference on averaged values
+  buildFeatures(avg_mq3, avg_mq5, avg_mq135);
   normalizeFeatures();
+  
   runModel(kFreshnessModel, output);
   bool fresh = output[0] >= 0.0f;
+  
   runModel(kFruitModel, output);
   uint8_t fruitIndex = 0;
   for (uint8_t i = 1; i < TINYML_FRUIT_OUTPUTS; ++i) {
@@ -107,18 +128,20 @@ void loop() {
 
   char fruit[12];
   strcpy_P(fruit, kFruitLabels[fruitIndex]);
+
+  // Serial logging using averaged values
   Serial.print(F("ADC[MQ3="));
-  Serial.print(static_cast<int>(mq3));
+  Serial.print(static_cast<int>(avg_mq3));
   Serial.print(F(", MQ5="));
-  Serial.print(static_cast<int>(mq5));
+  Serial.print(static_cast<int>(avg_mq5));
   Serial.print(F(", MQ135="));
-  Serial.print(static_cast<int>(mq135));
+  Serial.print(static_cast<int>(avg_mq135));
   Serial.print(F("] V[MQ3="));
-  Serial.print(adcToVoltage(mq3), 3);
+  Serial.print(adcToVoltage(avg_mq3), 3);
   Serial.print(F(", MQ5="));
-  Serial.print(adcToVoltage(mq5), 3);
+  Serial.print(adcToVoltage(avg_mq5), 3);
   Serial.print(F(", MQ135="));
-  Serial.print(adcToVoltage(mq135), 3);
+  Serial.print(adcToVoltage(avg_mq135), 3);
   Serial.print(F("] RESULT["));
   Serial.print(fresh ? F("FRESH") : F("SPOILED"));
   Serial.print(F(", fruit="));
@@ -133,7 +156,6 @@ void loop() {
     }
     lastFreshness = static_cast<int8_t>(fresh);
   }
-  delay(200);
 }
 
 void drawFreshApple() {
