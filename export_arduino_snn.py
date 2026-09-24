@@ -80,7 +80,6 @@ def main():
     open_rotten = load_open_resampled('banana_rotten.csv')
     custom_fresh = load_recording('banana_fresh_custom.csv', custom=True)
     custom_rotten = load_recording('banana_rotten_custom.csv', custom=True)
-    custom_spoil = load_recording('banana_starts_to_spoil_custom.csv', custom=True)
     no_fruit = load_recording('no_fruit.csv', custom=True)
     gains, offsets, gate, fresh_end, rotten_end, no_fruit_end = calibration(
         open_fresh, open_rotten, custom_fresh, custom_rotten, no_fruit
@@ -93,7 +92,6 @@ def main():
     for name, frame, expected in [
         ('held-out custom fresh', custom_fresh.iloc[fresh_end:], 1),
         ('held-out custom spoiled', custom_rotten.iloc[rotten_end:], 0),
-        ('custom starts to spoil (diagnostic)', custom_spoil, None),
         ('held-out no fruit', no_fruit.iloc[no_fruit_end:], 2),
     ]:
         raw = even_sample(frame, 3000)

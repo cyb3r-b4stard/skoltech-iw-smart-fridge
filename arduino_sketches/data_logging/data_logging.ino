@@ -28,8 +28,8 @@ const uint8_t NUM_SAMPLES         = 20;    // Number of samples to average
 const unsigned long SAMPLE_DELAY  = 50;    // Delay between individual readings (ms) -> 20 * 50ms = 1s per record
 
 // Metadata Config (Change these values before recording each session!)
-const char FRUIT_TYPE[] = "no_fruit";  // Options e.g.: "apple", "banana", "tomato", "no_fruit"
-const char STATE_LABEL[] = "no_fruit";  // Options: "fresh", "starts_to_spoil", "spoiled", "no_fruit"
+const char FRUIT_TYPE[] = "banana";  // Options e.g.: "apple", "banana", "tomato", "no_fruit"
+const char STATE_LABEL[] = "fresh";  // Options: "fresh", "starts_to_spoil", "spoiled", "no_fruit"
 
 // Tracking variables
 unsigned long sampleCounter = 0;

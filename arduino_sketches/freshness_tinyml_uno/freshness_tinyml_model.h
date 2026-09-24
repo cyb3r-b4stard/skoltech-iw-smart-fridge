@@ -7,12 +7,12 @@
 // 0=spoiled, 1=fresh, 2=no fruit.
 constexpr uint8_t FRESHNESS_INPUTS = 9;
 constexpr uint8_t FRESHNESS_NODE_COUNT = 9;
-constexpr int16_t kNoFruitRawMq3ThresholdQ8 = 547;
+constexpr int16_t kNoFruitRawMq3ThresholdQ8 = 4220;
 const float kCustomToOpenGain[3] PROGMEM = {
-  0.247288803f, -0.710491368f, 10.2661597f
+  0.757511638f, 13.0647131f, 3.60962567f
 };
 const float kCustomToOpenOffset[3] PROGMEM = {
-  82.9912965f, 1141.0757f, -665.098859f
+  -331.743335f, -140.018315f, -124.921123f
 };
 const uint16_t kFeatureQ[FRESHNESS_INPUTS] PROGMEM = {
   1024, 4096, 16, 16, 512, 16, 16, 16, 16

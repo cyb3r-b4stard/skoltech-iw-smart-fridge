@@ -8,13 +8,13 @@
 constexpr uint8_t SNN_INPUTS = 9;
 constexpr uint8_t SNN_NEURONS = 9;
 constexpr uint8_t SNN_STEPS = 8;
-constexpr int16_t kNoFruitRawMq3ThresholdQ8 = 547;
+constexpr int16_t kNoFruitRawMq3ThresholdQ8 = 2644;
 constexpr int32_t kSnnOutputBiasQ = 5237;
 const float kCustomToOpenGain[3] PROGMEM = {
-  0.247288803f, -0.710491368f, 10.2661597f
+  0.519744483f, 12.42741f, 3.36239103f
 };
 const float kCustomToOpenOffset[3] PROGMEM = {
-  82.9912965f, 1141.0757f, -665.098859f
+  -138.474303f, -80.7491289f, -104.858032f
 };
 const float kSnnCenter[SNN_INPUTS] PROGMEM = {
   2.51493979f, 0.255735904f, -582.645996f, 105.45771f, 10.5773945f, 371.179779f, 688.103699f, 895.463867f, 209.137787f
