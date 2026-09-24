@@ -1,56 +1,17 @@
-# Freshness TinyML for Arduino Uno
+# Banana Freshness TinyML for Arduino Uno
 
-This sketch contains the final TinyML export trained from the three gas sensors:
+This sketch predicts banana freshness as `FRESH`, `SPOILED`, or `NO_FRUIT`.
 
-- MQ-3: `A5`
-- MQ-5: `A4`
-- MQ-135: `A3`
+Sensor inputs are MQ3 on `A3`, MQ5 on `A5`, and MQ135 on `A0`, matching the confirmed collection wiring. The sketch averages 20 ADC readings and checks the no-fruit gate in the raw MQ3 domain. Banana readings use the per-sensor affine mapping `open = custom × gain + offset` stored in `freshness_tinyml_model.h`, then enter a depth-seven entropy decision tree trained on open banana fresh/rotten data sorted by `Ticks` and summarized once per observed second within each recording burst. The first 20% of custom fresh and custom spoiled recordings supplies the two calibration anchors. The legacy MQ5/MQ135 column swap used in training should be verified against the connected hardware.
 
-It uses the selected nine engineered features, in this exact order:
+The sketch computes all nine engineered features: MQ3/MQ135, MQ3/MQ5, MQ3−MQ5, MQ3−MQ135, MQ5/MQ135, sample sensor standard deviation, MQ5−MQ135, MQ5+MQ135, and MQ3. The fitted tree receives all nine inputs and selects a subset for its actual splits. It stores 9 packed five-byte nodes (45 bytes) in `PROGMEM`, with int16 thresholds quantized at per-feature precision and byte-sized indexes and labels. Inference uses integer comparisons and no neural-network activation buffers.
 
-1. `MQ3 / MQ135`
-2. `MQ3 / MQ5`
-3. `MQ3 - MQ5`
-4. `MQ3 - MQ135`
-5. `MQ5 / MQ135`
-6. sample standard deviation of `MQ3`, `MQ5`, `MQ135`
-7. `MQ5 - MQ135`
-8. `MQ5 + MQ135`
-9. `MQ3`
-
-The sketch contains two exported MLP heads:
-
-- Freshness: `9 -> 40 -> 28 -> 14 -> 1`
-- Fruit type: `9 -> 40 -> 28 -> 14 -> 8`
-
-Weights are int8 and stored in flash with `PROGMEM`; biases are int32 and the model uses small float activation buffers. The slightly smaller generated header plus an 8-row e-paper page buffer and in-place feature normalization reduce SRAM pressure while keeping the model within the Arduino Uno's 32 KB flash and 2 KB SRAM limits.
-
-Open `freshness_tinyml_uno.ino` in the Arduino IDE, select Arduino Uno, connect the sensors, and upload. Predictions are printed to the serial monitor at 115200 baud.
-
-The sketch also drives a 1.54-inch monochrome GxEPD2 display using `CS=D10`, `DC=D9`, `RST=D8`, and `BUSY=D7`. A fresh prediction shows only `FRESH` and a clean apple illustration; a non-fresh prediction shows only `SPOILED` and a spotted, cracked apple illustration. The e-paper refreshes only when the predicted freshness state changes.
-
-The serial monitor runs at 115200 baud and prints labeled raw ADC values, sensor voltages in volts, freshness, and fruit prediction. Example:
+The 1.54-inch monochrome GxEPD2 display uses `CS=D10`, `DC=D9`, `RST=D8`, and `BUSY=D7`. It changes only when the predicted state changes. The serial monitor must use **115200 baud**. Example:
 
 ```text
-ADC[MQ3=512, MQ5=430, MQ135=601] V[MQ3=2.502, MQ5=2.102, MQ135=2.942] RESULT[FRESH, fruit=apple]
+ADC[MQ3=92, MQ5=855, MQ135=70] V[MQ3=0.450, MQ5=4.179, MQ135=0.342] RESULT[FRESH]
 ```
 
-Voltages are calculated from the Uno's 5 V ADC reference and 10-bit ADC range. Set the serial monitor to **115200 baud**; other baud rates will display unreadable characters.
+Regenerate the header after changing data or training code with `.venv/bin/python export_arduino_model.py`. The exporter updates only `freshness_tinyml_model.h`; it does not overwrite the display sketch.
 
-To regenerate the export after retraining:
-
-```text
-.venv/bin/python export_arduino_model.py
-```
-
-The exporter trains on the full sampled dataset. The notebook remains the source for validation metrics; the generated C model is intended for embedded inference.
-
-The exporter updates only `freshness_tinyml_model.h`; it intentionally does not overwrite this display-integrated sketch.
-
-## Quantization validation
-
-The exporter emulates the generated int8-weight/int32-bias inference path before writing the final model. On the held-out temporal-segment split, the quantized models achieved:
-
-- Slightly smaller model: freshness **91.14%**, fruit type **90.76%**, joint **83.77%**.
-
-For the final smaller models trained on all sampled rows, quantized predictions agreed with the original float models on **99.60%** of freshness predictions and **98.28%** of fruit predictions. This validates the quantization numerically in Python; an Arduino IDE or Arduino CLI build/upload is still required for hardware-level verification.
+The exporter reports blocked-split balanced accuracy, macro F1, spoiled recall, float/integer agreement, and custom-recording predictions. With one-second open data, the tree reached **0.9889 mean blocked balanced accuracy** and **0.9778 spoiled recall**. Holding out the entire last burst of each open class gave only **0.5084 balanced accuracy**. On held-out custom data it reached **0.8502 fresh accuracy**, **1.0000 spoiled accuracy**, and **0.9251 balanced accuracy**. A local AVR build used **17,432 bytes of program memory** and **665 bytes of static RAM** on the Uno target. `starts_to_spoil` has no corresponding open training label and is diagnostic only.

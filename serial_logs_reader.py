@@ -5,7 +5,7 @@ import os
 
 # --- Configuration ---
 BAUD_RATE = 115200
-OUTPUT_FILE = "banana_starts_to_spoil.csv"
+OUTPUT_FILE = "banana_spoiled.csv"
 
 
 def find_arduino_port():

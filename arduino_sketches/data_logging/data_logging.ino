@@ -2,7 +2,7 @@
   =============================================================================
   Gas Sensors CSV Dataset Collector for TinyML / Machine Learning
   =============================================================================
-  Sensors: MQ-3 (A5), MQ-5 (A3), MQ-135 (A0)
+  Sensors: MQ-3 (A3), MQ-5 (A5), MQ-135 (A0)
   Averaging: 20 consecutive samples per output record
   Output: CSV format via Serial (115200 baud)
   
@@ -17,8 +17,8 @@
 #include <Arduino.h>
 
 // Sensor Pin Definitions
-const uint8_t MQ3_PIN   = A5;
-const uint8_t MQ5_PIN   = A3;
+const uint8_t MQ5_PIN   = A5;
+const uint8_t MQ3_PIN   = A3;
 const uint8_t MQ135_PIN = A0;
 
 // ADC & System Parameters
@@ -28,8 +28,8 @@ const uint8_t NUM_SAMPLES         = 20;    // Number of samples to average
 const unsigned long SAMPLE_DELAY  = 50;    // Delay between individual readings (ms) -> 20 * 50ms = 1s per record
 
 // Metadata Config (Change these values before recording each session!)
-const char FRUIT_TYPE[] = "banana";  // Options e.g.: "apple", "banana", "tomato", "no_fruit"
-const char STATE_LABEL[] = "starts_to_spoil";  // Options: "fresh", "starts_to_spoil", "spoiled", "no_fruit"
+const char FRUIT_TYPE[] = "no_fruit";  // Options e.g.: "apple", "banana", "tomato", "no_fruit"
+const char STATE_LABEL[] = "no_fruit";  // Options: "fresh", "starts_to_spoil", "spoiled", "no_fruit"
 
 // Tracking variables
 unsigned long sampleCounter = 0;
